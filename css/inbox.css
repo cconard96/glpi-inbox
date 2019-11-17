@@ -1,0 +1,70 @@
+/*
+ -------------------------------------------------------------------------
+ GLPI Inbox
+ Copyright (C) 2019 by Curtis Conard
+ https://github.com/cconard96/glpi-inbox
+ -------------------------------------------------------------------------
+ LICENSE
+ This file is part of GLPI Inbox.
+ GLPI Inbox is free software; you can redistribute it and/or modify
+ it under the terms of the GNU General Public License as published by
+ the Free Software Foundation; either version 2 of the License, or
+ (at your option) any later version.
+ GLPI Inbox is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU General Public License for more details.
+ You should have received a copy of the GNU General Public License
+ along with GLPI Inbox. If not, see <http://www.gnu.org/licenses/>.
+ --------------------------------------------------------------------------
+ */
+
+#inbox-btn {
+   float: right;
+   width: 24px;
+   height: 24px;
+   margin-right: 10px;
+   display: inline-block;
+   margin-top: 2px;
+   font-size: 1.6em;
+   cursor: pointer;
+}
+
+#inbox-dropdown {
+   width: 500px;
+   min-height: 50px;
+   background-color: #0b0b0bcc;
+   z-index: 10000;
+   position: absolute;
+   color: white;
+   padding: 5px;
+}
+
+#inbox-dropdown-messages .message.unread {
+   padding-left: 3px;
+}
+
+#inbox-dropdown-messages .message.read {
+   padding-left: 5px;
+}
+
+#inbox-dropdown-messages .message.unread {
+   border-left: 2px solid #00bb00;
+}
+
+#inbox-dropdown-messages .message:not(:last-of-type) {
+   border-bottom: 1px solid #ccccccaa;
+}
+
+/** Utility styles */
+hr.faint {
+   border: 1px solid #ccccccaa;
+}
+
+.bold {
+   font-weight: bold;
+}
+
+.right {
+   float: right;
+}
