@@ -46,12 +46,26 @@ class PluginInboxMessage extends CommonDBTM {
       return $input;
    }
 
-   function getAllReceivedForUser(int $users_id = null) {
+   function getAllReceivedForUser(int $users_id = null, $params = []) {
+      $p = [
+         'order'  => ['date_sent DESC'],
+         'start'  => 0,
+         'limit'  => null
+      ];
+      $p = array_replace($p, $params);
+
       if ($users_id === null) {
          $users_id = Session::getLoginUserID();
       }
 
-      return $this->find(['users_id_recipient' => $users_id]);
+      $messages = $this->find(['users_id_recipient' => $users_id], $p['order'], $p['limit']);
+      // Inject additional data to be passed to the JS code
+      foreach ($messages as &$message) {
+         if ($message['itemtype'] !== null) {
+            $message['_link'] = $message['itemtype']::getFormURLWithID($message['items_id']);
+         }
+      }
+      return $messages;
    }
 
    static function sendMessage(int $users_id, array $message_data) {
@@ -61,51 +75,14 @@ class PluginInboxMessage extends CommonDBTM {
          'users_id_recipient' => $users_id,
          'subject'            => $message_data['subject'] ?? '',
          'message'            => $message_data['message'] ?? '',
-         'date_send'          => $_SESSION['glpi_currenttime'],
+         'date_sent'          => $_SESSION['glpi_currenttime'],
          'itemtype'           => $message_data['itemtype'] ?? null,
          'items_id'           => $message_data['items_id'] ?? 0
       ]);
    }
 
-   static function getActionBarForMessage($source, $type) {
-      switch ($source) {
-         case self::SOURCE_TICKET:
-         case self::SOURCE_CHANGE:
-         case self::SOURCE_PROBLEM:
-            break;
-      }
-   }
-
    public static function showInbox() {
-      global $CFG_GLPI;
-
-      $message = new self();
-      $messages = $message->getAllReceivedForUser();
-      $user = new User();
-
-      $out = "<table class='tab_cadre_fixe'>";
-      $out .= "<thead><tr class='tab_bg_1'></tr><th>" . __('Sender', 'inbox') . "</th>";
-      $out .= "<th>" . __('Message', 'inbox') . "</th>";
-      $out .= "<th>" . __('Date received', 'inbox') . "</th></tr></thead>";
-      foreach ($messages as $data) {
-         if ($data['users_id_sender'] !== null) {
-            $user->getFromDB($data['users_id_sender']);
-            $sender_pic = Html::image(User::getThumbnailURLForPicture($user->fields['picture']), [
-               'width'  => 50
-            ]);
-            $sender_name = getUserName($data['users_id_sender']);
-         } else {
-            $sender_pic = Html::image($CFG_GLPI["root_doc"]."/pics/picture_min.png", [
-               'width'  => 50
-            ]);
-            $sender_name = __('System', 'inbox');
-         }
-         $out .= "<tr class='tab_bg_2'>";
-         $out .= "<td>{$sender_pic}<br>{$sender_name}</td><td>{$data['subject']}<br>{$data['message']}</td><td>{$data['date_sent']}</td>";
-         $out .= "</tr>";
-      }
-      $out .= "</table>";
-
-      echo $out;
+      // Just output the inbox container. The JS code will auto-magically inject the inbox into it.
+      echo "<div id='glpi-inbox'></div>";
    }
 }

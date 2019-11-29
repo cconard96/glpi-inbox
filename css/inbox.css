@@ -30,14 +30,19 @@
    cursor: pointer;
 }
 
+#inbox-btn i {
+   color: white;
+}
+
 #inbox-dropdown {
    width: 500px;
    min-height: 50px;
-   background-color: #0b0b0bcc;
+   background-color: #fffffff2;
    z-index: 10000;
    position: absolute;
-   color: white;
+   color: black;
    padding: 5px;
+   box-shadow: 1px 2px #d9d9d980;
 }
 
 #inbox-dropdown-messages .message.unread {
@@ -45,15 +50,65 @@
 }
 
 #inbox-dropdown-messages .message.read {
-   padding-left: 5px;
+   padding-left: 7px;
 }
 
 #inbox-dropdown-messages .message.unread {
-   border-left: 2px solid #00bb00;
+   border-left: 4px solid #00bb00;
 }
 
 #inbox-dropdown-messages .message:not(:last-of-type) {
    border-bottom: 1px solid #ccccccaa;
+}
+
+#inbox-table {
+   width: 100% !important;
+   max-width: unset !important;
+}
+
+#inbox-table .inbox-message:hover {
+   background-color: #393837;
+}
+
+#inbox-table .inbox-message {
+   border-bottom: 1px solid #00000033;
+   padding: 10px 5px;
+}
+
+#inbox-table .inbox-message span {
+   display: inline-block;
+   margin-right: 10px;
+}
+
+#inbox-table .inbox-message .message-short {
+   position: absolute;
+   left: 60px;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+   overflow: hidden;
+   max-width: calc(100vw - calc(1ch * 40));
+}
+
+#inbox-table .inbox-message .user-badge img {
+   border-radius: 50%;
+}
+
+#inbox-table .inbox-message .user-badge {
+   position: absolute;
+   right: 18ch;
+}
+
+#inbox-table .inbox-message .message-dates {
+   position: absolute;
+   right: 10px;
+}
+
+#inbox-table .inbox-message span.message-title {
+   font-weight: bold;
+}
+
+#inbox-table .inbox-message .message-toolbar {
+
 }
 
 /** Utility styles */
@@ -67,4 +122,19 @@ hr.faint {
 
 .right {
    float: right;
+}
+
+/** Bootstrap compatibility (Can drop after Bootstrap is included in core) */
+.alert {
+   position: relative;
+   padding: .75rem 1.25rem;
+   margin-bottom: 1rem;
+   border: 1px solid transparent;
+   border-radius: .25rem;
+}
+
+.alert-danger {
+   color: #721c24;
+   background-color: #f8d7da;
+   border-color: #f5c6cb;
 }

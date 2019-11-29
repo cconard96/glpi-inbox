@@ -25,9 +25,67 @@
       this.inboxDropdown = null;
       this.ajax_root = '';
 
+      var getTeamBadge = function(teammember) {
+         var itemtype = teammember["itemtype"];
+         var items_id = teammember["items_id"];
+
+         if (itemtype === 'User') {
+            var user_img = null;
+            $.ajax({
+               url: (self.ajax_root + "../../../ajax/getUserPicture.php"),
+               async: false,
+               data: {
+                  users_id: [items_id],
+                  size: 30,
+                  allow_blank: true,
+               },
+               contentType: 'application/json',
+               dataType: 'json'
+            }).done(function (data) {
+               if (data[items_id] !== undefined) {
+                  user_img = data[items_id];
+               }
+            });
+            if (user_img !== null) {
+               return "<span>" + user_img + "</span>";
+            }
+         }
+         return '';
+      };
+
       var updateMessageCounter = function() {
          var count = $("#inbox-dropdown-messages li").length;
          $('#inbox-dropdown .inbox-counter').first().html(count + " " + __("Messages", 'inbox'));
+      };
+
+      var getMessageIconClassForItemtype = function(itemtype) {
+         switch (itemtype) {
+            case 'Ticket':
+               return 'fa-ticket-alt';
+            case 'Change':
+               return 'fa-exchange-alt';
+            case 'Problem':
+               return 'fa-exclamation-triangle';
+            default:
+               return 'fa-envelope';
+         }
+      };
+
+      var getMessages = function(params, success, error) {
+         $.ajax({
+            method: 'GET',
+            url: (self.ajax_root + "getMessages.php"),
+            success: function(data, textStatus, jqHXR) {
+               if (success !== undefined && typeof success === "function") {
+                  success(data, textStatus, jqHXR);
+               }
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+               if (error !== undefined && typeof error === "function") {
+                  error(jqXHR, textStatus, errorThrown);
+               }
+            }
+         });
       };
 
       this.showMessageDropdown = function(caller) {
@@ -38,20 +96,20 @@
             var inboxURL = CFG_GLPI.root_doc + "/plugins/inbox/front/inbox.php";
             $("<hr class='faint'><a href='" + inboxURL + "'>View all messages</a>").appendTo(self.inboxDropdown);
 
-            $.ajax({
-               method: 'GET',
-               url: (self.ajax_root + "getMessages.php"),
-               success: function(data) {
-                  if (data.length === 0) {
-                     $("#inbox-dropdown-messages").html("<li>" + __('No unread messages', 'inbox') + "</li>");
-                  } else {
-                     $("#inbox-dropdown-messages").empty();
-                     $.each(data, function(ind, message) {
-                        $("<li class='message unread'><div class='bold'>" + message.subject.substring(0, 50) + "</div><div>" + message.message.substring(0, 100) + "</div></li>").appendTo("#inbox-dropdown-messages");
-                     });
-                  }
-                  updateMessageCounter();
+            getMessages({limit: 10}, function(data) {
+               if (data.length === 0) {
+                  $("#inbox-dropdown-messages").html("<li>" + __('No unread messages', 'inbox') + "</li>");
+               } else {
+                  $("#inbox-dropdown-messages").empty();
+                  $.each(data, function(ind, message) {
+                     var msgClasses = 'message';
+                     if (message.date_read === null) {
+                        msgClasses += ' unread';
+                     }
+                     $("<li class='" + msgClasses + "'><div class='bold'>" + message.subject.substring(0, 50) + "</div><div>" + message.message.substring(0, 100) + "</div></li>").appendTo("#inbox-dropdown-messages");
+                  });
                }
+               updateMessageCounter();
             });
             self.inboxDropdown.hide();
          }
@@ -65,12 +123,55 @@
          });
       };
 
+      this.showInbox = function(containerID) {
+         getMessages({}, function(data) {
+            var container = $("#"+containerID);
+            var markAllAsRead = $("<a href='#'>" + __('Mark all as read', 'inbox') + "</a>").appendTo(container);
+            markAllAsRead.on('click', function() {
+               console.log("Mark all as read");
+            });
+
+            var messageList = $("<ul id='inbox-table'></ul>").appendTo(container);
+            $.each(data, function(ind, message) {
+               var icon = "<i class='fas fa-2x " + getMessageIconClassForItemtype(message.itemtype) + "'/>";
+               if (message._link !== undefined) {
+                  icon = "<a href='" + message._link + "'>" + icon + "</a>";
+               }
+               var msgSubject = "<span class='message-title' title='" + message.subject.replace(/'/g, "&#39;") + "'>" + message.subject + "</span>";
+               var msgBody = "<span title='" + message.message.replace(/'/g, "&#39;") + "'>" + message.message + "</span>";
+               var msgShort = msgSubject + "<br>" + msgBody;
+               var imgUser = "<span class='user-badge'>" + getTeamBadge({
+                  itemtype: 'User',
+                  items_id: message.users_id_sender
+               }) + "</span>";
+               $("<li class='inbox-message'><span>" + icon + "</span><span class='message-short'>" + msgShort + "</span><span class='message-dates'>" + imgUser + message.date_sent + "</span>").appendTo(messageList);
+            });
+         }, function() {
+            // Display error
+            var container = $("#"+containerID);
+            $("<div class='alert alert-danger'>" + __('Failed to retrieve messages', 'inbox') + "</div>").appendTo(container);
+         });
+      };
+
+      this.showMessageConversation = function() {
+
+      };
+
+      this.showChatPopup = function(caller) {
+
+      };
+
       this.init = function() {
          self.ajax_root = CFG_GLPI.root_doc + "/plugins/inbox/ajax/";
          $("<a id='inbox-btn' href='#' title='" + __('View inbox', 'inbox') + "'><i class='fas fa-inbox'/></a>").insertAfter("#menu_all_button");
          $("#inbox-btn").on('click', function() {
             self.showMessageDropdown(this);
          });
+
+         // Show inbox if the expected element is on the page
+         if ($("#glpi-inbox").length > 0) {
+            self.showInbox("glpi-inbox");
+         }
       };
    };
 })();

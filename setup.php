@@ -29,8 +29,13 @@ function plugin_init_inbox() {
    $PLUGIN_HOOKS['csrf_compliant']['inbox'] = true;
    $PLUGIN_HOOKS['add_javascript']['inbox'][] = 'js/inbox.js';
    $PLUGIN_HOOKS['add_css']['inbox'][] = 'css/inbox.css';
+   if ($_SESSION['glpipalette'] === 'darker') {
+      $PLUGIN_HOOKS['add_css']['inbox'][] = 'css/inbox_dark.css';
+   }
    $PLUGIN_HOOKS['item_add']['inbox'] = [
       'Ticket'       => 'plugin_inbox_add_item',
+      'Change'       => 'plugin_inbox_add_item',
+      'Problem'       => 'plugin_inbox_add_item',
       'ITILFollowup' => 'plugin_inbox_add_item',
       'TicketTask'   => 'plugin_inbox_add_item'
    ];

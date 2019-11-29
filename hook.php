@@ -65,6 +65,20 @@ function plugin_inbox_add_item($item) {
          $message['itemtype'] = 'Ticket';
          $message['items_id'] = $item->getID();
          break;
+      case 'Change':
+         $message['subject']  = sprintf(__('New change (#%d) %s', 'inbox'), $item->getID(), $item->fields['name']);
+         $message['message']  = Html::clean(Toolbox::unclean_cross_side_scripting_deep(nl2br($item->fields['content'])));
+         $message['users_id_sender'] = $item->fields['users_id_recipient'];
+         $message['itemtype'] = 'Change';
+         $message['items_id'] = $item->getID();
+         break;
+      case 'Problem':
+         $message['subject']  = sprintf(__('New problem (#%d) %s', 'inbox'), $item->getID(), $item->fields['name']);
+         $message['message']  = Html::clean(Toolbox::unclean_cross_side_scripting_deep(nl2br($item->fields['content'])));
+         $message['users_id_sender'] = $item->fields['users_id_recipient'];
+         $message['itemtype'] = 'Problem';
+         $message['items_id'] = $item->getID();
+         break;
       default:
          return false;
    }
