@@ -32,18 +32,11 @@ function plugin_init_inbox() {
    if ($_SESSION['glpipalette'] === 'darker') {
       $PLUGIN_HOOKS['add_css']['inbox'][] = 'css/inbox_dark.css';
    }
-   $PLUGIN_HOOKS['item_add']['inbox'] = [
-      'Ticket'       => 'plugin_inbox_add_item',
-      'Change'       => 'plugin_inbox_add_item',
-      'Problem'       => 'plugin_inbox_add_item',
-      'ITILFollowup' => 'plugin_inbox_add_item',
-      'TicketTask'   => 'plugin_inbox_add_item'
-   ];
-   $PLUGIN_HOOKS['item_update']['inbox'] = [
-      'Ticket'       => 'plugin_inbox_update_item',
-      'ITILFollowup' => 'plugin_inbox_update_item',
-      'TicketTask'   => 'plugin_inbox_update_item'
-   ];
+
+   Notification_NotificationTemplate::registerMode(
+      Notification_NotificationTemplate::MODE_SMS,
+      __('Inbox', 'inbox'),
+      'inbox');
 }
 
 function plugin_version_inbox() {

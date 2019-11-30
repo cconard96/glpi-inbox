@@ -30,6 +30,18 @@
    cursor: pointer;
 }
 
+#inbox-btn span.fa-stack {
+   line-height: 1em;
+   height: 1em;
+   vertical-align: unset;
+   width: unset;
+   margin-right: 10px;
+}
+
+#inbox-btn i:first-of-type {
+   z-index: -10;
+}
+
 #inbox-btn i {
    color: white;
 }
@@ -111,6 +123,12 @@
 
 }
 
+#inbox-btn .inbox-unread-notif {
+   position: relative;
+   color: red;
+   left: 1.25em;
+}
+
 /** Utility styles */
 hr.faint {
    border: 1px solid #ccccccaa;
@@ -122,6 +140,10 @@ hr.faint {
 
 .right {
    float: right;
+}
+
+.fa-stack-half {
+   font-size: 0.5em;
 }
 
 /** Bootstrap compatibility (Can drop after Bootstrap is included in core) */
@@ -137,4 +159,10 @@ hr.faint {
    color: #721c24;
    background-color: #f8d7da;
    border-color: #f5c6cb;
+}
+
+.alert-info {
+   color: #0c5460;
+   background-color: #d1ecf1;
+   border-color: #bee5eb;
 }

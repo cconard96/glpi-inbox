@@ -47,10 +47,13 @@ class PluginInboxMessage extends CommonDBTM {
    }
 
    function getAllReceivedForUser(int $users_id = null, $params = []) {
+      global $DB;
+
       $p = [
-         'order'  => ['date_sent DESC'],
-         'start'  => 0,
-         'limit'  => null
+         'order'              => ['date_sent DESC'],
+         'start'              => 0,
+         'limit'              => null,
+         'conversation_mode'  => true
       ];
       $p = array_replace($p, $params);
 
@@ -58,14 +61,69 @@ class PluginInboxMessage extends CommonDBTM {
          $users_id = Session::getLoginUserID();
       }
 
-      $messages = $this->find(['users_id_recipient' => $users_id], $p['order'], $p['limit']);
+      if ($p['conversation_mode']) {
+         $request = [
+            'SELECT'    => ['m1.*'],
+            'FROM'      => 'glpi_plugin_inbox_messages AS m1',
+            'LEFT JOIN' => [
+               'glpi_plugin_inbox_messages AS m2' => [
+                  'FKEY'   => [
+                     'm1'  => 'itemtype',
+                     'm2'  => 'itemtype', [
+                        'AND' => [
+                           'm1.items_id'  => new QueryExpression('m2.items_id'),
+                           'm1.users_id_recipient' => new QueryExpression('m2.users_id_recipient'),
+                           'OR'  => [
+                              'm1.date_sent' => ['<', new QueryExpression('m2.date_sent')],
+                              'm1.id' => ['<', new QueryExpression('m2.id')],
+                           ]
+                        ]
+                     ]
+                  ]
+               ]
+            ],
+            'WHERE'     => [
+               'm2.id'  => null,
+               'm1.users_id_recipient' => 2
+            ],
+            'ORDER'  => $p['order']
+         ];
+      } else {
+         $request = [
+            'SELECT' => ['*'],
+            'FROM'   => self::getTable(),
+            'WHERE'  => [
+               'users_id_recipient' => $users_id
+            ],
+            'ORDER'  => $p['order'],
+            'START'  => $p['start']
+         ];
+      }
+      if ($p['limit'] !== null) {
+         $request['LIMIT'] = $p['limit'];
+         $request['START'] = $p['start'];
+      }
+      $iterator = $DB->request($request);
+      $messages = [];
+      while ($data = $iterator->next()) {
+         $messages[] = $data;
+      }
+      //$messages = $this->find(['users_id_recipient' => $users_id], $p['order'], $p['limit']);
       // Inject additional data to be passed to the JS code
       foreach ($messages as &$message) {
          if ($message['itemtype'] !== null) {
             $message['_link'] = $message['itemtype']::getFormURLWithID($message['items_id']);
          }
       }
+
       return $messages;
+   }
+
+   function getAllForItem($users_id, $itemtype, $items_id) {
+      if ($users_id === null) {
+         $users_id = Session::getLoginUserID();
+      }
+      $this->find(['users_id_recipient' => $users_id]);
    }
 
    static function sendMessage(int $users_id, array $message_data) {

@@ -24,6 +24,7 @@
       var self = this;
       this.inboxDropdown = null;
       this.ajax_root = '';
+      this.messages = [];
 
       var getTeamBadge = function(teammember) {
          var itemtype = teammember["itemtype"];
@@ -88,7 +89,7 @@
          });
       };
 
-      this.showMessageDropdown = function(caller) {
+      this.showMessageDropdown = function(caller, messages) {
          if (self.inboxDropdown === null) {
             $("<div id='inbox-dropdown'></div>").appendTo('body');
             self.inboxDropdown = $("#inbox-dropdown");
@@ -96,21 +97,19 @@
             var inboxURL = CFG_GLPI.root_doc + "/plugins/inbox/front/inbox.php";
             $("<hr class='faint'><a href='" + inboxURL + "'>View all messages</a>").appendTo(self.inboxDropdown);
 
-            getMessages({limit: 10}, function(data) {
-               if (data.length === 0) {
-                  $("#inbox-dropdown-messages").html("<li>" + __('No unread messages', 'inbox') + "</li>");
-               } else {
-                  $("#inbox-dropdown-messages").empty();
-                  $.each(data, function(ind, message) {
-                     var msgClasses = 'message';
-                     if (message.date_read === null) {
-                        msgClasses += ' unread';
-                     }
-                     $("<li class='" + msgClasses + "'><div class='bold'>" + message.subject.substring(0, 50) + "</div><div>" + message.message.substring(0, 100) + "</div></li>").appendTo("#inbox-dropdown-messages");
-                  });
-               }
-               updateMessageCounter();
-            });
+            if (messages.length === 0) {
+               $("#inbox-dropdown-messages").html("<li>" + __('No unread messages', 'inbox') + "</li>");
+            } else {
+               $("#inbox-dropdown-messages").empty();
+               $.each(messages, function(ind, message) {
+                  var msgClasses = 'message';
+                  if (message.date_read === null) {
+                     msgClasses += ' unread';
+                  }
+                  $("<li class='" + msgClasses + "'><div class='bold'>" + message.subject.substring(0, 50) + "</div><div>" + message.message.substring(0, 100) + "</div></li>").appendTo("#inbox-dropdown-messages");
+               });
+            }
+            updateMessageCounter();
             self.inboxDropdown.hide();
          }
 
@@ -128,7 +127,9 @@
             var container = $("#"+containerID);
             var markAllAsRead = $("<a href='#'>" + __('Mark all as read', 'inbox') + "</a>").appendTo(container);
             markAllAsRead.on('click', function() {
-               console.log("Mark all as read");
+               $.ajax({
+                  url: (self.ajax_root + "readMessage.php")
+               });
             });
 
             var messageList = $("<ul id='inbox-table'></ul>").appendTo(container);
@@ -163,9 +164,26 @@
 
       this.init = function() {
          self.ajax_root = CFG_GLPI.root_doc + "/plugins/inbox/ajax/";
-         $("<a id='inbox-btn' href='#' title='" + __('View inbox', 'inbox') + "'><i class='fas fa-inbox'/></a>").insertAfter("#menu_all_button");
-         $("#inbox-btn").on('click', function() {
-            self.showMessageDropdown(this);
+         getMessages({limit: 10}, function(data) {
+            self.messages = data;
+            var iconStack = "<i class='fas fa-inbox'/>";
+            var unreadCount = 0;
+            $.each(self.messages, function(ind, message) {
+               if (message.date_read === null) {
+                  unreadCount++;
+               }
+            });
+            if (unreadCount > 0) {
+               iconStack = "<span class='fa-stack'>" +
+                  "<i class='fas fa-inbox fa-stack-1x'/>" +
+                  "<i class='fas fa-circle fa-stack-half inbox-unread-notif'/>" +
+                  "</span>";
+            }
+            $("<a id='inbox-btn' href='#' title='" + __('View inbox', 'inbox') + "'>" + iconStack + "</a>").insertAfter("#menu_all_button");
+            $("#inbox-btn").on('click', function() {
+               var caller = this;
+               self.showMessageDropdown(caller, self.messages);
+            });
          });
 
          // Show inbox if the expected element is on the page
